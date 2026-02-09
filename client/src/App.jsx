@@ -1,23 +1,26 @@
 import { useEffect, useState } from "react";
+import { io } from "socket.io-client";
+
+const socket = io("http://localhost:5000");
 
 function App() {
-  const [health, setHealth] = useState("Loading...");
+  const [socketId, setSocketId] = useState("Not connected");
 
   useEffect(() => {
-    fetch("http://localhost:5000/health")
-      .then((res) => res.json())
-      .then((data) => {
-        setHealth(JSON.stringify(data));
-      })
-      .catch((err) => {
-        setHealth("Backend not reachable");
-      });
+    socket.on("connect", () => {
+      setSocketId(socket.id);
+    });
+
+    return () => {
+      socket.off("connect");
+    };
   }, []);
 
   return (
     <div style={{ padding: "20px" }}>
       <h1>Collaborative Code Editor</h1>
-      <p>Backend Health: {health}</p>
+      <p>Socket Status: Connected</p>
+      <p>Socket ID: {socketId}</p>
     </div>
   );
 }

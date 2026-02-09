@@ -1,20 +1,35 @@
-const express = require('express')
-const cors = require('cors')
-const app = express()
-app.use(cors())
-app.use(express.json())
+const express = require("express");
+const cors = require("cors");
+const http = require("http");
+const { Server } = require("socket.io");
 
-app.get('/', (req, res) => {
-  res.send('root')
-})
+const app = express();
+app.use(cors());
+app.use(express.json());
+
 app.get("/health", (req, res) => {
-  res.json({
-    ok: true,
-    message: "Backend is healthy",
-    time: new Date().toISOString(),
+  res.json({ ok: true });
+});
+
+const port = process.env.PORT || 5000;
+
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST"],
+  },
+});
+
+io.on("connection", (socket) => {
+  console.log("User connected:", socket.id);
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
   });
 });
-const port = process.env.PORT || 5000;
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`)
-})
+
+server.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
+});
