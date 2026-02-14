@@ -7,6 +7,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.get("/", (req, res) => {
+  res.send("Server running");
+});
+
 app.get("/health", (req, res) => {
   res.json({ ok: true });
 });
@@ -23,11 +27,25 @@ const io = new Server(server, {
 });
 
 io.on("connection", (socket) => {
-  socket.on("join room",()=>{
+  console.log("User connected:", socket.id);
+  let currentRoom = null;
+
+  socket.on("join-room", (roomId) => {
+    if (currentRoom) {
+      socket.leave(currentRoom);
+    }
+
     socket.join(roomId);
-    console.log(`${socketId} has joined ${roomId}`)
-    socket.emit("joined-room",roomId);
-  })
+    currentRoom = roomId;
+
+    console.log("JOIN:", socket.id, roomId);
+    socket.emit("joined-room", roomId);
+  });
+
+  socket.on("code-change", ({ roomId, code }) => {
+    socket.to(roomId).emit("code-update", { roomId, code });
+  });
+
 
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);
