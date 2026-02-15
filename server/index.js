@@ -26,6 +26,8 @@ const io = new Server(server, {
   },
 });
 
+const roomCode = {};
+
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
   let currentRoom = null;
@@ -40,9 +42,13 @@ io.on("connection", (socket) => {
 
     console.log("JOIN:", socket.id, roomId);
     socket.emit("joined-room", roomId);
+
+    const existingCode = roomCode[roomId] || "";
+    socket.emit("room-code", { roomId, code: existingCode });
   });
 
   socket.on("code-change", ({ roomId, code }) => {
+    roomCode[roomId] = code;
     socket.to(roomId).emit("code-update", { roomId, code });
   });
 

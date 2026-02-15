@@ -16,7 +16,11 @@ function App() {
 
     socket.on("joined-room", (room) => {
       setJoinedRoom(room);
-      setCode(""); 
+      setCode("");
+    });
+
+    socket.on("room-code", ({ roomId, code }) => {
+        setCode(code);
     });
 
     socket.on("code-update", ({ roomId, code }) => {
@@ -29,6 +33,7 @@ function App() {
       socket.off("connect");
       socket.off("joined-room");
       socket.off("code-update");
+      socket.off("room-code");
 
     };
   }, [joinedRoom]);
