@@ -1,5 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
+import Editor from "@monaco-editor/react";
+
+
 
 const socket = io("http://localhost:5000");
 
@@ -8,6 +11,8 @@ function App() {
   const [roomId, setRoomId] = useState("");
   const [joinedRoom, setJoinedRoom] = useState("None");
   const [code, setCode] = useState("");
+  const [language, setLanguage] = useState("cpp");
+  const isRemoteUpdate = useRef(false);
 
   useEffect(() => {
     socket.on("connect", () => {
@@ -20,14 +25,21 @@ function App() {
     });
 
     socket.on("room-code", ({ roomId, code }) => {
-        setCode(code);
-    });
-
-    socket.on("code-update", ({ roomId, code }) => {
       if (roomId === joinedRoom) {
+        isRemoteUpdate.current = true;
         setCode(code);
       }
     });
+
+
+
+    socket.on("code-update", ({ roomId, code }) => {
+      if (roomId === joinedRoom) {
+        isRemoteUpdate.current = true;
+        setCode(code);
+      }
+    });
+
 
     return () => {
       socket.off("connect");
@@ -75,19 +87,43 @@ function App() {
         Joined Room: <b>{joinedRoom}</b>
       </p>
 
-      <textarea
+      <div style={{ marginBottom: "12px" }}>
+        <label style={{ marginRight: "10px" }}>Language:</label>
+
+        <select
+          value={language}
+          onChange={(e) => setLanguage(e.target.value)}
+          style={{ padding: "6px" }}
+        >
+          <option value="cpp">C++</option>
+          <option value="java">Java</option>
+          <option value="python">Python</option>
+          <option value="javascript">JavaScript</option>
+        </select>
+      </div>
+
+
+      <Editor
+        height="60vh"
+        language={language}
+        theme="vs-dark"
         value={code}
-        onChange={(e) => {
-          const newCode = e.target.value;
+        onChange={(value) => {
+          const newCode = value || "";
           setCode(newCode);
+
+          if (isRemoteUpdate.current) {
+            isRemoteUpdate.current = false;
+            return;
+          }
 
           if (joinedRoom !== "None") {
             socket.emit("code-change", { roomId: joinedRoom, code: newCode });
           }
         }}
-        rows={15}
-        cols={80}
+
       />
+
 
     </div>
   );
