@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
+const axios = require("axios");
 
 const app = express();
 app.use(cors());
@@ -13,6 +14,35 @@ app.get("/", (req, res) => {
 
 app.get("/health", (req, res) => {
   res.json({ ok: true });
+});
+
+app.post("/compile", async (req, res) => {
+  const { code, language } = req.body;
+
+  const languageMap = {
+    cpp: 54,
+    python: 71,
+    java: 62,
+    javascript: 63,
+  };
+
+  try {
+    const submission = await axios.post(
+      "https://ce.judge0.com/submissions?base64_encoded=false&wait=true",
+      {
+        source_code: code,
+        language_id: languageMap[language],
+      }
+    );
+
+    res.json({
+      output: submission.data.stdout || submission.data.stderr,
+    });
+
+  } catch (err) {
+    console.log(err.message);
+    res.json({ output: "Error running code" });
+  }
 });
 
 const port = process.env.PORT || 5000;

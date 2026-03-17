@@ -57,15 +57,31 @@ function App() {
 
     socket.emit("join-room", room);
   };
+  const createRoom = () => {
+    const randomId = "room-" + Math.floor(1000 + Math.random() * 9000);
+    setRoomId(randomId);
+
+    socket.emit("join-room", randomId);
+  };
+  const runCode = async () => {
+    const res = await fetch("http://localhost:5000/compile", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        code,
+        language,
+      }),
+    });
+
+    const data = await res.json();
+    alert(data.output);
+  };
 
   return (
     <div style={{ padding: "20px" }}>
-      <h1>Collaborative Code Editor</h1>
 
-      <p>Socket Status: Connected</p>
-      <p>Socket ID: {socketId}</p>
-
-      <hr />
 
       <h2>Join a Room</h2>
 
@@ -82,10 +98,25 @@ function App() {
       >
         Join
       </button>
+      <button
+        onClick={createRoom}
+        style={{ marginLeft: "10px", padding: "8px 14px" }}
+      >
+        Create Room
+      </button>
 
       <p style={{ marginTop: "15px" }}>
         Joined Room: <b>{joinedRoom}</b>
       </p>
+      <button
+        onClick={() => {
+          navigator.clipboard.writeText(joinedRoom);
+          alert("Room ID copied!");
+        }}
+        style={{ marginTop: "10px", padding: "6px 12px" }}
+      >
+        Copy Room ID
+      </button>
 
       <div style={{ marginBottom: "12px" }}>
         <label style={{ marginRight: "10px" }}>Language:</label>
@@ -123,6 +154,13 @@ function App() {
         }}
 
       />
+
+      <button
+        onClick={runCode}
+        style={{ marginTop: "10px", padding: "8px 16px" }}
+      >
+        Run Code
+      </button>
 
 
     </div>
